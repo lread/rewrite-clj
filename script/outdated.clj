@@ -1,13 +1,8 @@
-#!/usr/bin/env bb
-
 (ns outdated
-  (:require [babashka.classpath :as cp]
-            [clojure.java.io :as io]))
-
-(cp/add-classpath "./script")
-(require '[helper.env :as env]
-         '[helper.shell :as shell]
-         '[helper.status :as status])
+  (:require [clojure.java.io :as io]
+            [helper.env :as env]
+            [helper.shell :as shell]
+            [helper.status :as status]))
 
 (defn check-clojure []
   (status/line :info "Checking Clojure deps")
@@ -24,10 +19,9 @@
       (status/line :detail "All Node.js dependencies seem up to date.")
       (status/line :detail "(warning: deps are only checked against installed ./node_modules)"))))
 
-(defn check-outdated[]
+(defn -main []
   (env/assert-min-versions)
   (check-clojure)
   (check-nodejs)
   (status/line :detail "\nDone."))
 
-(check-outdated)

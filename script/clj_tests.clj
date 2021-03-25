@@ -1,14 +1,9 @@
-#!/usr/bin/env bb
-
 (ns clj_tests
-  (:require [babashka.classpath :as cp]
-            [clojure.string :as string]
-            [clojure.tools.cli :as cli] ))
-
-(cp/add-classpath "./script")
-(require '[helper.env :as env]
-         '[helper.shell :as shell]
-         '[helper.status :as status])
+  (:require [clojure.string :as string]
+            [clojure.tools.cli :as cli]
+            [helper.env :as env]
+            [helper.shell :as shell]
+            [helper.status :as status]))
 
 (def allowed-clojure-versions '("1.9" "1.10"))
 (def default-clojure-version "1.10")
@@ -58,7 +53,7 @@
                   "--profile" "test-isolated"
                   "--reporter" "documentation"]))
 
-(defn main [args]
+(defn -main [args]
   (env/assert-min-versions)
   (let [{:keys [options exit-message exit-code]} (validate-args args)]
     (if exit-message
@@ -66,5 +61,3 @@
       (do (run-unit-tests options)
           (run-isolated-tests options))))
   nil)
-
-(main *command-line-args*)

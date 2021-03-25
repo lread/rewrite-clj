@@ -1,20 +1,13 @@
-#!/usr/bin/env bb
-
-(ns cljdoc-docker-preview
-  (:require [babashka.classpath :as cp]
-            [babashka.curl :as curl]
-            [babashka.deps :as deps]
+(ns cljdoc-preview
+  (:require [babashka.curl :as curl]
+            [clojure.data.xml :as xml]
+            [clojure.data.zip.xml :as zxml]
             [clojure.java.browse :as browse]
-            [clojure.string :as string]))
-
-(cp/add-classpath "./script")
-(deps/add-deps "{:deps {org.clojure/data.zip {:mvn/version \"1.0.0\"}}}")
-(require  '[clojure.data.xml :as xml]
-          '[clojure.data.zip.xml :as zxml]
-          '[clojure.zip :as zip]
-          '[helper.fs :as fs]
-          '[helper.shell :as shell]
-          '[helper.status :as status])
+            [clojure.string :as string]
+            [clojure.zip :as zip]
+            [helper.fs :as fs]
+            [helper.shell :as shell]
+            [helper.status :as status]))
 
 ;;
 ;; constants
@@ -49,7 +42,7 @@
 ;;
 (defn get-from-pom [& tag-path]
   (let  [xml (-> "./pom.xml"
-                 slurp 
+                 slurp
                  (xml/parse-str :namespace-aware false)
                  zip/xml-zip)]
     (apply zxml/xml1-> (concat  [xml] tag-path [zxml/text]))))
@@ -216,7 +209,7 @@
 (defn cleanup-resources []
   (fs/delete-file-recursively cljdoc-db-dir true))
 
-(defn main [args]
+(defn -main [& args]
 
   (check-prerequisites)
 
@@ -261,4 +254,3 @@
           (println "Must be run from project root directory.")
           (System/exit 1)))))
 
-(main *command-line-args*)

@@ -1,15 +1,10 @@
-#!/usr/bin/env bb
-
 (ns gen-api-diffs
-  (:require [babashka.classpath :as cp]
-            [clojure.java.io :as io]
-            [clojure.string :as string]))
-
-(cp/add-classpath "./script")
-(require '[helper.env :as env]
-         '[helper.fs :as fs]
-         '[helper.shell :as shell]
-         '[helper.status :as status])
+  (:require [clojure.java.io :as io]
+            [clojure.string :as string]
+            [helper.env :as env]
+            [helper.fs :as fs]
+            [helper.shell :as shell]
+            [helper.status :as status]))
 
 (defn install-locally []
   (status/line :info "installing rewrite-clj v1 locally from dev")
@@ -50,7 +45,7 @@
                           "--report-filename" (str  (io/file report-dir (str report-name ".adoc")))]
                          extra-args)))
 
-(defn main []
+(defn -main []
   (env/assert-min-versions)
   (let [opts {:notes-dir "doc/diff-notes"
               :report-dir "doc/generated/api-diffs"}
@@ -72,5 +67,3 @@
     (diff-apis opts rewrite-clj-v1-lang-cljs   rewrite-clj-v1-lang-clj   "rewrite-clj-v1-lang-cljs-and-rewrite-clj-v1-lang-clj"                 to-self-args)
     (diff-apis opts rewrite-clj-v1-lang-cljs   rewrite-clj-v1-lang-clj   "rewrite-clj-v1-lang-cljs-and-rewrite-clj-v1-lang-clj-documented-only" (concat to-self-args documented-only-args)))
   nil)
-
-(main)
