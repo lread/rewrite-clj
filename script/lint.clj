@@ -8,7 +8,12 @@
 (defn cache-exists? []
   (.exists (io/file ".clj-kondo/.cache")))
 
-(defn -main []
+(defn -main
+  "Lint sources with clj-kondo.
+
+   If clj-kondo cache does not already exist, it will be built to include all dependencies.
+   See ./.clj-kondo/ for our configuration."
+  []
   (env/assert-min-versions)
   (if (not (cache-exists?))
     (status/line :info "linting and building cache")

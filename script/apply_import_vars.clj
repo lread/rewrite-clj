@@ -3,7 +3,16 @@
             [helper.shell :as shell]
             [helper.status :as status]))
 
-(defn -main[& args]
+(defn -main
+  "Apply import vars
+
+   A static, template driven version of potemkin import-vars.
+   Generates public APIs from ./templates/**.
+
+   Args:
+    check     - to check and return non-zero on stale source
+    gen-code  - to generate source from templates"
+  [& args]
   (env/assert-min-versions)
   (let [cmd (first args)]
     (when (not (#{"gen-code" "check"} cmd))

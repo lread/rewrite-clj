@@ -6,76 +6,76 @@
         doric/doric {:mvn/version "0.9.0"}
         version-clj/version-clj {:mvn/version "0.1.2"}}
  :tasks {:lint
-         [:babashka -m lint]
+         [:main lint]
 
          :import-vars
          ^{:description "[gencode|check]"}
-         [:babashka -m apply-import-vars]
+         [:main apply-import-vars]
 
          :test/clj
          ^{:description "[<args>]"}
-         [:babashka -m clj-tests]
+         [:main clj-tests]
 
          :test/clj-watch
          ^{:description "[<kaocha args>]"}
-         [:babashka -m clj-watch]
+         [:main clj-watch]
 
          :test/cljs
          ^{:description "[<args>] - run tests under ClojureScript"}
-         [:babashka -m cljs-tests]
+         [:main cljs-tests]
 
          :test/cljs-shadow
-         ^{:description "- run unit tests under shadow cljs"}
-         [:babashka -m shadow-cljs-test]
+         ^{:description "run unit tests under shadow cljs"}
+         [:main shadow-cljs-test]
 
          :test/cljs-watch
-         ^{:description "- watch cljs tests with figwheel main"}
-         [:babashka -m cljs-watch]
+         ^{:description "watch cljs tests with figwheel main"}
+         [:main cljs-watch]
 
          :test/coverage
-         ^{:description "- generate code coverage reports for Clojure tests"}
-         [:babashka -m coverage]
+         ^{:description "generate code coverage reports for Clojure tests"}
+         [:main coverage]
 
          :test/doc
-         ^{:description "- test doc code blocks"}
-         [:babashka -m doc-tests]
+         ^{:description "test doc code blocks"}
+         [:main doc-tests]
 
          :test/libs
          ^{:description "[run|outdated] - verify that libs using rewrite-clj* work with current rewrite-clj"}
-         [:babashka -m libs-tests]
+         [:main libs-tests]
 
          :outdated
-         ^{:description "- report on outdated Clojure and npm dependencies"}
-         [:babashka -m outdated]
+         ^{:description "report on outdated Clojure and npm dependencies"}
+         [:main outdated]
 
          :test/native
-         ^{:description "- run rewrite-clj and tests after compiled to GraalVM native image"}
-         [:babashka -m pure-native-test]
+         ^{:description "run rewrite-clj and tests after compiled to GraalVM native image"}
+         [:main pure-native-test]
 
          :test/native-sci
-         ^{:description "- interpret rewrite-clj tests via sci on a rewrite-clj native image"}
-         [:babashka -m sci-native-test]
+         ^{:description "interpret rewrite-clj tests via sci on a rewrite-clj native image"}
+         [:main sci-native-test]
 
          :test/native-sci-sanity
-         ^{:description "- JVM only sanity test for :test/native-sci"}
-         [:babashka -m sci-jvm-test]
+         ^{:description "JVM only sanity test for :test/native-sci"}
+         [:main sci-jvm-test]
 
          :doc/api-diffs
-         ^{:description "- generate diff docs for rewrite-clj* APIs"}
-         [:babashka -m gen-api-diffs]
+         ^{:description "generate diff docs for rewrite-clj* APIs"}
+         [:main gen-api-diffs]
 
          :doc/cljdoc
          ^{:description "<args> - preview what docs will look like on cljdoc"}
-         [:babashka -m cljdoc-preview]
+         [:main cljdoc-preview]
 
          :doc/update-readme
-         ^{:description "- honor our contributors in the README"}
-         [:babashka -m update-readme]
+         ^{:description "honor our contributors in the README"}
+         [:main update-readme]
 
          :ci/unit-tests
-         [:babashka -m ci-tests]
+         [:main ci-tests]
 
          :ci/release
          ^{:description "<args>"}
-         [:babashka -m release]}}
+         [:main release]}}
 

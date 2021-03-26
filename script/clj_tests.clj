@@ -1,4 +1,4 @@
-(ns clj_tests
+(ns clj-tests
   (:require [clojure.string :as string]
             [clojure.tools.cli :as cli]
             [helper.env :as env]
@@ -16,7 +16,7 @@
    ["-h" "--help"]])
 
 (defn usage [options-summary]
-  (->> ["Usage: cljs_test.clj <options>"
+  (->> ["Usage: <options>"
         options-summary]
        (string/join "\n")))
 
@@ -53,7 +53,12 @@
                   "--profile" "test-isolated"
                   "--reporter" "documentation"]))
 
-(defn -main [args]
+(defn -main
+  "Run unit tests under Clojure
+
+   Args:
+     --clojure-version [1.9|1.10]"
+  [& args]
   (env/assert-min-versions)
   (let [{:keys [options exit-message exit-code]} (validate-args args)]
     (if exit-message
