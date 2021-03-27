@@ -561,16 +561,14 @@
 
 (def docopt-usage "Libs Tests
 
-Usage:
-  libs_tests.clj run [<lib-name>...]
-  libs_tests.clj outdated [<lib-name>...]
-
-Options:
-  -h --help     Show this screen.
+Args:
+  run [<lib-name>...]
+  outdated [<lib-name>...]
 
 Specifying no lib-names selects all libraries.")
 
-(defn -main [& args]
+(defn ^{:doc (str (+ 1 2 3))} -main
+  [& args]
   (if-let [opts (-> docopt-usage docopt/parse (docopt-match/match-argv args))]
     (let [lib-names (get opts "<lib-name>")
           requested-libs (if (zero? (count lib-names))
