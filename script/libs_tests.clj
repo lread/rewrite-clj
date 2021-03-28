@@ -1,32 +1,19 @@
-#!/usr/bin/env bb
-
-(ns libs-test
+(ns libs-tests
   "Test 3rd party libs against rewrite-clj head"
-  (:require [babashka.classpath :as cp]
-            [babashka.curl :as curl]
-            [babashka.deps :as deps]
+  (:require [babashka.curl :as curl]
             [babashka.fs :as fs]
             [cheshire.core :as json]
             [clojure.java.io :as io]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [docopt.core :as docopt]
+            [docopt.match :as docopt-match]
+            [doric.core :as doric]
+            [helper.shell :as shell]
+            [helper.status :as status]
+            [io.aviso.ansi :as ansi]
+            [release.version :as version]))
 
-(deps/add-deps
- '{:deps {io.aviso/pretty {:mvn/version "0.1.36"}
-          docopt/docopt {:git/url "https://github.com/nubank/docopt.clj" 
-                         :sha "98814f559d2e50fdf10f43cbe3b7da0ca3cca423"}
-          doric/doric {:mvn/version "0.9.0"}}})
-
-(cp/add-classpath (.getParent (io/file *file*)))
-
-(require '[docopt.core :as docopt]
-         '[docopt.match :as docopt-match]
-         '[doric.core :as doric]
-         '[helper.shell :as shell]
-         '[helper.status :as status]
-         '[io.aviso.ansi :as ansi]
-         '[release.version :as version])
-
-(defn shcmd-no-exit 
+(defn shcmd-no-exit
   "Thin wrapper on babashka.process/process that does not exit on error."
   ([cmd] (shcmd-no-exit cmd {}))
   ([cmd opts]
@@ -105,7 +92,7 @@
       (str (fs/file target-root-dir zip-root-dir)))))
 
 (defn- print-deps [deps-out]
-  (->  deps-out 
+  (->  deps-out
        (string/replace #"(org.clojure/clojurescript|org.clojure/clojure)"
                        (-> "$1"
                            ansi/bold-yellow-bg
@@ -118,8 +105,8 @@
 
 (defn- deps-tree [{:keys [home-dir]} cmd]
   (let [{:keys [out err]} (shcmd cmd {:dir home-dir
-                                              :out :string
-                                              :err :string})]
+                                      :out :string
+                                      :err :string})]
     (->  (format "stderr->:\n%s\nstdout->:\n%s" err out)
          print-deps)))
 
@@ -143,13 +130,13 @@
 
 (defn- patch-deps [{:keys [filename removals additions]}]
   (status/line :detail (format "=> Patching deps in: %s" filename))
-  (shcmd ["clojure" "-X:deps-patcher" 
-                  (if (string/ends-with? filename "deps.edn")
-                    "update-deps-deps"
-                    "update-project-deps")
-                  :filename (pr-str filename)
-                  :removals (str removals)
-                  :additions (str additions)]))
+  (shcmd ["clojure" "-X:deps-patcher"
+          (if (string/ends-with? filename "deps.edn")
+            "update-deps-deps"
+            "update-project-deps")
+          :filename (pr-str filename)
+          :removals (str removals)
+          :additions (str additions)]))
 
 ;;
 ;; Generic patch for deps.edn rewrite-clj v1 projects
@@ -174,7 +161,7 @@
 
 ;;
 ;; antq
-;; 
+;;
 (defn antq-patch [{:keys [home-dir rewrite-clj-version]}]
   (patch-deps {:filename (str (fs/file home-dir "deps.edn"))
                :removals #{'lread/rewrite-cljc}
@@ -182,8 +169,8 @@
   (patch-rewrite-cljc-sources home-dir))
 
 ;;
-;; carve 
-;; 
+;; carve
+;;
 (defn carve-patch [{:keys [home-dir rewrite-clj-version]}]
   (patch-deps {:filename (str (fs/file home-dir "deps.edn"))
                :removals #{'borkdude/rewrite-cljc}
@@ -192,25 +179,25 @@
 
 ;;
 ;; cljfmt
-;; 
+;;
 
 (defn- cljfmt-patch [{:keys [home-dir rewrite-clj-version]}]
   (patch-deps {:filename (str (fs/file home-dir "project.clj"))
                :removals #{'rewrite-clj 'rewrite-cljs}
                :additions [['rewrite-clj rewrite-clj-version]
                            ['org.clojure/clojure "1.9.0"]]}))
-  
+
 ;;
 ;; clojure-lsp
-;; 
+;;
 (defn- clojure-lsp-patch [{:keys [home-dir rewrite-clj-version]}]
   (patch-deps {:filename (str (fs/file home-dir "deps.edn"))
-                  :removals #{'rewrite-clj/rewrite-clj}
-                  :additions {'rewrite-clj/rewrite-clj {:mvn/version rewrite-clj-version}}}))
+               :removals #{'rewrite-clj/rewrite-clj}
+               :additions {'rewrite-clj/rewrite-clj {:mvn/version rewrite-clj-version}}}))
 
 ;;
 ;; cljstyle
-;; 
+;;
 
 (defn- cljstyle-patch [{:keys [home-dir rewrite-clj-version]}]
   (patch-deps {:filename (str (fs/file home-dir "project.clj"))
@@ -252,7 +239,7 @@
 
 ;;
 ;; lein ancient
-;; 
+;;
 (defn- lein-ancient-patch [{:keys [home-dir rewrite-clj-version]}]
   (status/line :detail "=> Patching deps")
   (let [p (str (fs/file home-dir "project.clj"))]
@@ -268,7 +255,7 @@
 
 ;;
 ;; mranderson
-;; 
+;;
 (defn- mranderson-patch [{:keys [home-dir rewrite-clj-version]}]
   (status/line :detail "=> Patching deps")
   (let [p (str (fs/file home-dir "project.clj"))]
@@ -292,7 +279,7 @@
 
 ;;
 ;; refactor-nrepl
-;; 
+;;
 
 (defn- refactor-nrepl-prep [{:keys [home-dir]}]
   (status/line :detail "=> Inlining deps")
@@ -308,11 +295,11 @@
                         (format "rewrite-clj \"%s\"" rewrite-clj-version))
         (string/replace #"\[(cljfmt\ \"[0-9.]+\")\]"
                         "[$1 :exclusions [rewrite-clj rewrite-cljs]]")
-       (->> (spit p)))))
+        (->> (spit p)))))
 
 ;;
 ;; zprint
-;; 
+;;
 
 (defn- zprint-patch [{:keys [home-dir rewrite-clj-version]}]
   (patch-deps {:filename (str (fs/file home-dir "project.clj"))
@@ -329,7 +316,7 @@
     (fs/copy src-filename orig-filename)
     (status/line :detail (format "- hacking %s" src-filename))
     (if-let [ndx (string/last-index-of content find-str)]
-      (spit src-filename 
+      (spit src-filename
             (str (subs content 0 ndx)
                  replace-str
                  (subs content (+ ndx (count find-str)))))
@@ -341,7 +328,7 @@
   (status/line :detail "=> Installing not-yet-released expectations/cljc-test")
   (let [clone-to-dir (str (fs/file target-root-dir "clojure-test"))]
     (shcmd ["git" "clone" "--branch" "enhancements"
-                    "https://github.com/kkinnear/clojure-test.git" clone-to-dir])
+            "https://github.com/kkinnear/clojure-test.git" clone-to-dir])
     (run! #(shcmd % {:dir clone-to-dir})
           [["git" "reset" "--hard" "a6c3be067ab06f677d3b1703ee4092d25db2bb60"]
            ["clojure" "-M:jar"]
@@ -349,7 +336,7 @@
 
   (status/line :detail "=> Building uberjar for uberjar tests")
   (shcmd ["lein" "uberjar"] {:dir home-dir})
-  
+
   (status/line :detail "=> Installing zprint locally for ClojureScript tests")
   (shcmd ["lein" "install"] {:dir home-dir}))
 
@@ -528,12 +515,11 @@
   (status/line :info "Prep target")
   (status/line :detail (format "(re)creating: %s" target-root-dir))
   (when (fs/exists? target-root-dir) (fs/delete-tree target-root-dir))
-  (.mkdirs (fs/file target-root-dir))
- )
+  (.mkdirs (fs/file target-root-dir)))
 
 ;;
 ;; cmds
-;; 
+;;
 (defn- report-outdated [requested-libs]
   (status/line :info "Checking for outdated libs")
   (status/line :detail (format  "Requested libs: %s" (into [] (map :name requested-libs))))
@@ -574,16 +560,14 @@
 
 (def docopt-usage "Libs Tests
 
-Usage:
-  libs_tests.clj run [<lib-name>...]
-  libs_tests.clj outdated [<lib-name>...]
+Args:
+  run [<lib-name>...]
+  outdated [<lib-name>...]
 
-Options:
-  -h --help     Show this screen.
-                   
 Specifying no lib-names selects all libraries.")
 
-(defn main [args]
+(defn ^{:doc (str (+ 1 2 3))} -main
+  [& args]
   (if-let [opts (-> docopt-usage docopt/parse (docopt-match/match-argv args))]
     (let [lib-names (get opts "<lib-name>")
           requested-libs (if (zero? (count lib-names))
@@ -603,5 +587,3 @@ Specifying no lib-names selects all libraries.")
 
       nil)
     (status/fatal docopt-usage)))
-
-(main *command-line-args*)

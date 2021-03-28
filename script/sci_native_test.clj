@@ -1,15 +1,9 @@
-#!/usr/bin/env bb
-
-(ns sci-test-gen-native-image
-  (:require
-   [babashka.classpath :as cp]
-   [clojure.java.io :as io]))
-
-(cp/add-classpath "./script")
-(require '[helper.env :as env]
-         '[helper.graal :as graal]
-         '[helper.shell :as shell]
-         '[helper.status :as status])
+(ns sci-native-test
+  (:require [clojure.java.io :as io]
+            [helper.env :as env]
+            [helper.graal :as graal]
+            [helper.shell :as shell]
+            [helper.status :as status]))
 
 (defn expose-api-to-sci []
   (status/line :info "Expose rewrite-clj API to sci")
@@ -30,13 +24,13 @@
       (status/fatal (str "native image " exe-fname " not found.") 1))
     (shell/command [exe-fname "--file" "script/sci_test_runner.clj" "--classpath" "test"])))
 
-(defn -main [ & _args ]
+(defn -main [& _args]
   (env/assert-min-versions)
   (let [native-image-xmx "6g"
         graal-reflection-fname "target/native-image/reflection.json"
         target-exe "target/sci-test-rewrite-clj"]
     (status/line :info "Creating native image for testing via sci")
-    (status/line :detail "java -version" )
+    (status/line :detail "java -version")
     (shell/command ["java" "-version"])
     (status/line :detail (str "\nnative-image max memory: " native-image-xmx))
     (let [graal-native-image (graal/find-graal-native-image)]
@@ -56,5 +50,3 @@
                                  target-exe (.length (io/file target-exe)))))
   (interpret-tests)
   nil)
-
-(-main)

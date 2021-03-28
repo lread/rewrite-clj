@@ -1,21 +1,16 @@
-#!/usr/bin/env bb
-
 (ns update-readme
   "Script to update README.adoc to credit contributors
   Run manually as needed."
-  (:require [babashka.classpath :as cp]
-            [clojure.edn :as edn]
+  (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.string :as string]
+            [helper.fs :as fs]
+            [helper.shell :as shell]
+            [helper.status :as status]
             [hiccup.util :as hu]
             [hiccup2.core :as h])
   (:import (java.nio.file Files Paths CopyOption StandardCopyOption)
            (java.nio.file.attribute FileAttribute)))
-
-(cp/add-classpath "./script")
-(require '[helper.fs :as fs]
-         '[helper.shell :as shell]
-         '[helper.status :as status])
 
 (def contributions-lookup
   {:code-rewrite-clj-v1  "💻 rewrite-clj v1"
@@ -35,7 +30,7 @@
        "--\n"))
 
 (defn- update-readme-text [old-text marker-id new-content]
-  (let [marker (str "// AUTO-GENERATED:" marker-id )
+  (let [marker (str "// AUTO-GENERATED:" marker-id)
         marker-start (str marker "-START")
         marker-end (str marker "-END")]
     (string/replace old-text
@@ -63,7 +58,7 @@
     [:link {:type "text/css", :href style, :rel "stylesheet"}]))
 
 (defn generate-contributor-html [github-id contributions]
-  (str 
+  (str
    (h/html
     [:head
      (include-css "https://fonts.googleapis.com/css?family=Fira+Code&display=swap")
@@ -111,7 +106,7 @@
 (defn- str->Path [spath]
   (Paths/get spath (into-array String [])))
 
-  (defn- temp-Path [prefix]
+(defn- temp-Path [prefix]
   (Files/createTempDirectory prefix (into-array FileAttribute [])))
 
 (defn- move-Path [source target]
@@ -171,9 +166,9 @@
         (fs/delete-file-recursively (.toFile work-dir) true)
         (throw e)))))
 
-(defn- sort-contributors 
+(defn- sort-contributors
   "Maybe not perfect but the aim for now is to sort by number of contributions then github id.
-   Maybe I should just sort by github id?" 
+   Maybe I should just sort by github id?"
   [contributors]
   (reduce-kv (fn [m k v]
                (assoc m k (sort-by (juxt #(- (count (:contributions %)))
@@ -191,7 +186,7 @@
       (status/line :detail "* error: did not find google chrome - need it to generate images."))
     chrome-info))
 
-(defn main []
+(defn -main []
   (let [readme-filename "README.adoc"
         contributors-source "doc/contributors.edn"
         image-opts {:image-width 310
@@ -207,6 +202,3 @@
     (update-readme-file! contributors readme-filename image-opts)
     (status/line :detail "SUCCESS"))
   (shutdown-agents))
-
-(main)
-

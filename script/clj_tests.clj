@@ -1,14 +1,9 @@
-#!/usr/bin/env bb
-
-(ns clj_tests
-  (:require [babashka.classpath :as cp]
-            [clojure.string :as string]
-            [clojure.tools.cli :as cli] ))
-
-(cp/add-classpath "./script")
-(require '[helper.env :as env]
-         '[helper.shell :as shell]
-         '[helper.status :as status])
+(ns clj-tests
+  (:require [clojure.string :as string]
+            [clojure.tools.cli :as cli]
+            [helper.env :as env]
+            [helper.shell :as shell]
+            [helper.status :as status]))
 
 (def allowed-clojure-versions '("1.9" "1.10"))
 (def default-clojure-version "1.10")
@@ -21,7 +16,7 @@
    ["-h" "--help"]])
 
 (defn usage [options-summary]
-  (->> ["Usage: cljs_test.clj <options>"
+  (->> ["Usage: <options>"
         options-summary]
        (string/join "\n")))
 
@@ -40,6 +35,7 @@
       :else
       {:options options})))
 
+
 (defn exit [code msg]
   (if (zero? code)
     (status/line :detail msg)
@@ -52,13 +48,23 @@
                   (str "-M:test-common:kaocha:" clojure-version)
                   "--reporter" "documentation"]))
 
-(defn run-isolated-tests[{:keys [:clojure-version]}]
+(defn run-isolated-tests [{:keys [:clojure-version]}]
   (status/line :info (str "running isolated tests against clojure v" clojure-version))
   (shell/command ["clojure" (str "-M:kaocha:" clojure-version)
                   "--profile" "test-isolated"
                   "--reporter" "documentation"]))
 
-(defn main [args]
+(defn usage-help []
+  (->  (cli/parse-opts [] cli-options)
+       :summary
+       usage))
+
+(defn -main
+  "Run unit tests under Clojure
+
+   Args:
+     --clojure-version [1.9|1.10]"
+  [& args]
   (env/assert-min-versions)
   (let [{:keys [options exit-message exit-code]} (validate-args args)]
     (if exit-message
@@ -66,5 +72,3 @@
       (do (run-unit-tests options)
           (run-isolated-tests options))))
   nil)
-
-(main *command-line-args*)

@@ -1,12 +1,7 @@
-#!/usr/bin/env bb
-
 (ns coverage
-  (:require [babashka.classpath :as cp]))
-
-(cp/add-classpath "./script")
-(require '[helper.env :as env]
-         '[helper.shell :as shell]
-         '[helper.status :as status])
+  (:require [helper.env :as env]
+            [helper.shell :as shell]
+            [helper.status :as status]))
 
 (defn generate-doc-tests []
   (status/line :info "Generating tests for code blocks in documents")
@@ -20,10 +15,9 @@
                   "--no-randomize"
                   "--reporter" "documentation"]))
 
-(defn main []
+(defn -main []
   (env/assert-min-versions)
   (generate-doc-tests)
   (run-clj-doc-tests)
   nil)
 
-(main)

@@ -1,20 +1,13 @@
-#!/usr/bin/env bb
-
-(ns cljdoc-docker-preview
-  (:require [babashka.classpath :as cp]
-            [babashka.curl :as curl]
-            [babashka.deps :as deps]
+(ns cljdoc-preview
+  (:require [babashka.curl :as curl]
+            [clojure.data.xml :as xml]
+            [clojure.data.zip.xml :as zxml]
             [clojure.java.browse :as browse]
-            [clojure.string :as string]))
-
-(cp/add-classpath "./script")
-(deps/add-deps "{:deps {org.clojure/data.zip {:mvn/version \"1.0.0\"}}}")
-(require  '[clojure.data.xml :as xml]
-          '[clojure.data.zip.xml :as zxml]
-          '[clojure.zip :as zip]
-          '[helper.fs :as fs]
-          '[helper.shell :as shell]
-          '[helper.status :as status])
+            [clojure.string :as string]
+            [clojure.zip :as zip]
+            [helper.fs :as fs]
+            [helper.shell :as shell]
+            [helper.status :as status]))
 
 ;;
 ;; constants
@@ -38,10 +31,10 @@
 ;;
 ;; os/fs support
 ;;
-(defn cwd[]
+(defn cwd []
   (System/getProperty "user.dir"))
 
-(defn home-dir[]
+(defn home-dir []
   (System/getProperty "user.home"))
 
 ;;
@@ -49,7 +42,7 @@
 ;;
 (defn get-from-pom [& tag-path]
   (let  [xml (-> "./pom.xml"
-                 slurp 
+                 slurp
                  (xml/parse-str :namespace-aware false)
                  zip/xml-zip)]
     (apply zxml/xml1-> (concat  [xml] tag-path [zxml/text]))))
@@ -61,7 +54,7 @@
   (shell/command ["clojure" "-X:deploy:local"]))
 
 (defn get-project []
-  (str (get-from-pom :project :groupId) "/" (get-from-pom :project :artifactId) ))
+  (str (get-from-pom :project :groupId) "/" (get-from-pom :project :artifactId)))
 
 (defn get-version []
   (get-from-pom :project :version))
@@ -117,24 +110,24 @@
 ;; docker
 ;;
 
-(defn status-server [ container ]
+(defn status-server [container]
   (let [container-id (-> ["docker" "ps" "-q" "-f" (str "name=" (:name container))]
                          (shell/command {:out :string})
                          :out
                          string/trim)]
     (if (string/blank? container-id) "down" "up")))
 
-(defn docker-pull-latest [ container ]
+(defn docker-pull-latest [container]
   (shell/command ["docker" "pull" (:image container)]))
 
-(defn stop-server [ container ]
+(defn stop-server [container]
   (when (= "down" (status-server container))
     (status/fatal (str (:name container) " does not appear to be running")))
   (shell/command ["docker" "stop" (:name container) "--time" "0"]))
 
 (defn wait-for-server
   "Wait for container's http server to become available, assumes server has valid root page"
-  [ container ]
+  [container]
   (status/line :info (str "Waiting for " (:name container) " to become available"))
   (when (= "down" (status-server container))
     (status/fatal (string/join "\n" [(str  (:name container) " does not seem to be running.")
@@ -216,7 +209,7 @@
 (defn cleanup-resources []
   (fs/delete-file-recursively cljdoc-db-dir true))
 
-(defn main [args]
+(defn -main [& args]
 
   (check-prerequisites)
 
@@ -261,4 +254,3 @@
           (println "Must be run from project root directory.")
           (System/exit 1)))))
 
-(main *command-line-args*)

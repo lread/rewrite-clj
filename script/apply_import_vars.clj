@@ -1,14 +1,18 @@
-#!/usr/bin/env bb
-
 (ns apply-import-vars
-  (:require [babashka.classpath :as cp]))
+  (:require [helper.env :as env]
+            [helper.shell :as shell]
+            [helper.status :as status]))
 
-(cp/add-classpath "./script")
-(require '[helper.env :as env]
-         '[helper.shell :as shell]
-         '[helper.status :as status])
+(defn -main
+  "Apply import vars
 
-(defn main[args]
+   A static, template driven version of potemkin import-vars.
+   Generates public APIs from ./templates/**.
+
+   Args:
+    check     - to check and return non-zero on stale source
+    gen-code  - to generate source from templates"
+  [& args]
   (env/assert-min-versions)
   (let [cmd (first args)]
     (when (not (#{"gen-code" "check"} cmd))
@@ -17,4 +21,3 @@
     (shell/command ["clojure" "-X:apply-import-vars:script" cmd])
     nil))
 
-(main *command-line-args*)
